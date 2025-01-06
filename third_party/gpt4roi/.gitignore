@@ -1,0 +1,57 @@
+# Python
+__pycache__
+*.pyc
+*.egg-info
+dist
+
+# Log
+*.log
+*.log.*
+*.json
+
+# Data
+data
+!**/alpaca-data-conversation.json
+
+# Editor
+.idea
+*.swp
+
+# Other
+.DS_Store
+wandb
+output
+
+checkpoints
+ckpts*
+
+# Secret Environment Variables
+.env*
+
+# Amulet User Config
+.amltconfig
+
+# Devcontainer
+!.devcontainer/*
+
+# Blob Fuse
+.blobfuse/*.yaml
+!.blobfuse/*.example.yaml
+
+# Pretrained Models
+models
+vicuna-7b
+vicuna-7b-delta-v1.1
+decapoda-research-llama-7B-hf
+zuyao_share
+LLaVA-7b-pretrain-projector-v0-CC3M-595K-original_caption.bin
+
+llama-7b
+GPT4RoI-7B-delta
+GPT4RoI-7B
+
+# Gradio Box
+gradio-dev
+
+# Pnpm
+.pnpm-store

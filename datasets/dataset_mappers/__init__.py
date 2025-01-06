@@ -1,0 +1,1 @@
+from .pix2cap_coco_dataset_mapper import COCOPanopticDensecapDatasetMapper
