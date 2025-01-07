@@ -4,25 +4,9 @@ import os
 import re
 import subprocess
 import torch
-import socket
 
 logger = logging.getLogger(__name__)
-def get_local_rank():
-    comm = MPI.COMM_WORLD
-    global_rank = comm.Get_rank()
-    
-    hostname = socket.gethostname()
-    all_hostnames = comm.allgather(hostname)
-    
-    local_rank = sum(1 for host in all_hostnames[:global_rank] if host == hostname)
-    
-    return local_rank
-def get_local_size():
-    comm = MPI.COMM_WORLD
-    local_comm = comm.Split_type(split_type=MPI.COMM_TYPE_SHARED)
-    local_size = local_comm.size  
-    local_comm.Free()
-    return local_size
+
 
 class MPIAdapter:
     """
@@ -37,7 +21,7 @@ class MPIAdapter:
         local_address = '127.0.0.1'
         default_torch_distributed_port = port  # chosen arbitrarily
 
-        if 'PMI_SIZE' not in os.environ:
+        if 'OMPI_COMM_WORLD_SIZE' not in os.environ:
             # application was started without MPI
             # default to single node with single process
             self.env_info = 'no MPI'
@@ -47,34 +31,13 @@ class MPIAdapter:
             self.local_rank = 0
             self.master_address = local_address
             self.master_port = default_torch_distributed_port
-            
         else:
             # application was started with MPI
             # get MPI parameters
-            comm = MPI.COMM_WORLD
-            rank = comm.Get_rank()
-
-            shared_comm = comm.Split_type(MPI.COMM_TYPE_SHARED)
-            self.world_size = int(os.environ['PMI_SIZE'])
-            self.local_size = get_local_size()
-            self.rank = int(os.environ['PMI_RANK'])
-            self.local_rank = get_local_rank()
-            # hostname_first_node = (
-            # os.popen("scontrol show hostnames $SLURM_JOB_NODELIST")
-            # .read()
-            # .split("\n")[0]
-
-            # )
-            # if self.rank == 0:
-            #     self.master_address = hostname_first_node
-            #     self.master_port = default_torch_distributed_port
-            # else:
-            #     self.master_address = None
-            #     self.master_port = None
-            # self.master_address = MPI.COMM_WORLD.bcast(self.master_address, root=0)
-            # self.master_address = MPI.COMM_WORLD.bcast(self.master_address, root=0)
-            # self.master_port = MPI.COMM_WORLD.bcast(self.master_port, root=0)
-            # self.env_info = 'multi-node other MPI environment'
+            self.world_size = int(os.environ['OMPI_COMM_WORLD_SIZE'])
+            self.local_size = int(os.environ['OMPI_COMM_WORLD_LOCAL_SIZE'])
+            self.rank = int(os.environ['OMPI_COMM_WORLD_RANK'])
+            self.local_rank = int(os.environ['OMPI_COMM_WORLD_LOCAL_RANK'])
 
             if 'PHILLY_CONTAINER_IP' in os.environ:
                 # application is running on Philly

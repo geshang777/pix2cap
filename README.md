@@ -21,19 +21,17 @@
 conda create --name pix2cap python=3.8
 conda activate pix2cap
 pip install -r requirements.txt
+conda install -c conda-forge mpi4py
 
 # install detectron2
-git clone git@github.com:facebookresearch/detectron2.git # under your working directory
-cd detectron2 && pip install -e . && cd ..
+git clone https://github.com/MaureenZOU/detectron2-xyz.git # under your working directory
+cd detectron2-xyz && pip install -e . && cd ..
 
 # install other dependencies
 git clone https://github.com/cocodataset/panopticapi.git
 cd panopticapi/ && python setup.py build_ext --inplace  && python setup.py build_ext install && cd ..
-git+https://github.com/arogozhnikov/einops.git
-git+https://github.com/openai/whisper.git
-
-# prepare semantic labels
-python utils/prepare_coco_semantic_annos_from_panoptic_annos.py
+pip install git+https://github.com/arogozhnikov/einops.git
+pip install git+https://github.com/openai/whisper.git
 
 # download nltk related
 python utils/download_nltk.py
@@ -41,6 +39,8 @@ python utils/download_nltk.py
 # compile CUDA kernel for MSDeformAttn
 cd modeling/vision/encoder/ops && sh make.sh && cd ../../../../
 
+# install stanford-nlp
+bash datasets/evaluation/eval/get_stanford_models.sh
 ```
 ---
 ### Quick Start
@@ -73,15 +73,18 @@ This guide provides step-by-step instructions to prepare the datasets required f
     wget http://images.cocodataset.org/zips/train2017.zip && unzip train2017.zip
     wget http://images.cocodataset.org/zips/val2017.zip && unzip val2017.zip
     wget http://images.cocodataset.org/annotations/panoptic_annotations_trainval2017.zip && unzip panoptic_annotations_trainval2017.zip
+    cd annotations && mv -u panoptic_val2017.zip panoptic_train2017.zip ../ && cd ..
+    unzip panoptic_train2017.zip && unzip panoptic_val2017.zip
     ```
 ---
 
-3. Download Pix2Cap COCO Annotations
+3. Download Pix2Cap-COCO Annotations
     ```bash
-    mkdir annotations && cd annotations
+    cd annotations
     wget https://huggingface.co/xdecoder/X-Decoder/resolve/main/caption_class_similarity.pth
     wget https://huggingface.co/datasets/geshang/Pix2Cap-COCO/resolve/main/pix2cap_coco_train.json
     wget https://huggingface.co/datasets/geshang/Pix2Cap-COCO/resolve/main/pix2cap_coco_val.json
+    cd ../../../ && python utils/prepare_coco_semantic_annos_from_panoptic_annos.py
     ```
 ---
 After completing the steps, your dataset directory structure should look like this:
@@ -92,6 +95,10 @@ pix2cap_data/
 ├── coco/
 │   ├── train2017/
 │   ├── val2017/
+│   ├── panoptic_train2017/
+│   ├── panoptic_val2017/
+│   ├── panoptic_semseg_train2017/
+│   ├── panoptic_semseg_val2017/
 │   ├── annotations/
 │       ├── panoptic_train2017.json
 │       ├── panoptic_val2017.json
@@ -120,8 +127,11 @@ python utils/combine_weights.py
 ```
 ---
 
-## Training
+### Training
 ```bash
+export DETECTRON2_DATASETS=$(pwd)/pix2cap_data
+export DATASETS=$(pwd)/pix2cap_data
+export FI_EFA_FORK_SAFE=1
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 mpirun -n 8 python entry.py train \
             --conf_files configs/pix2cap_panoptic_segmentation_captioning.yaml \
             --overrides \
@@ -146,14 +156,16 @@ CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 mpirun -n 8 python entry.py train \
 ```
 ---
 
-## Evaluation
+### Evaluation
 
   ```bash
+  export DETECTRON2_DATASETS=$(pwd)/pix2cap_data
+  export DATASETS=$(pwd)/pix2cap_data
   CUDA_VISIBLE_DEVICES=0,1 mpirun -n 2 python entry.py evaluate \
               --conf_files configs/pix2cap_panoptic_segmentation_captioning.yaml \
               --overrides \
               COCO.INPUT.IMAGE_SIZE 1024 \
-              COCO.TEST.BATCH_SIZE_TOTAL 2 \
+              COCO.TEST.BATCH_SIZE_TOTAL 8 \
               COCO.TRAIN.BATCH_SIZE_TOTAL 4 \
               COCO.TRAIN.BATCH_SIZE_PER_GPU 2 \
               MODEL.DECODER.HIDDEN_DIM 512 \
@@ -180,7 +192,7 @@ To fine-tune GPT4RoI with Pix2Cap-COCO:
 To evaluate on the Visual Genome benchmark:
 1. Run the evaluation script:
    ```bash
-   bash evaluation_VG.sh \
+   bash evaluate_VG.sh \
        /path/to/HF_checkpoint \
        /path/to/evaluation_results \
        /path/to/test_caption.json \
@@ -193,18 +205,21 @@ To evaluate on the Visual Genome benchmark:
 1. Prepare ViP-Bench data by referring to the [ViP-Bench setup guide](./third_party/ViP-LLaVA/docs/Evaluation.md).
 2. Convert the ViP-Bench dataset into a format supported by GPT4RoI:
    ```bash
-   python ../ViP-LLaVAplayground/convert_vip_to_gpt4roi.py \
-       --questions /path/to/questions.jsonl \
+   # work_dir: /third_party/gpt4roi
+   python ../ViP-LLaVA/convert_vip_to_gpt4roi.py \
+       --questions /path/to/bbox/questions.jsonl \
        --meta /path/to/vip-bench-meta-data.json \
        --source /path/to/source_image \
        --output questions.jsonl
    ```
 3. Run inference on ViP-Bench:
    ```bash
+   # work_dir: /third_party/gpt4roi
+   mkdir -p ../ViP-LLaVA/playground/data/eval/ViP-Bench/answers
    python -m llava.eval.model_vqa \
        --model-name /path/to/HF_checkpoint \
        --question-file questions.jsonl \
-       --image-folder third_party/ViP-LLaVA/playground/data/eval/ViP-Bench/source_image \
+       --image-folder ../ViP-LLaVA/playground/data/eval/ViP-Bench/source_image \
        --answers-file third_party/ViP-LLaVA/playground/data/eval/ViP-Bench/answers/gpt4roi_plus_pix2cap-bbox.jsonl
    ```
 4. Evaluate the results:
@@ -216,7 +231,7 @@ To evaluate on the Visual Genome benchmark:
 
 ---
 
-For further details, refer to the provided setup guides for each component.
+For further details, refer to the provided setup guides for each part.
 
 
 ## Citation
@@ -225,4 +240,4 @@ If you think our work is helpful, please star this repo and cite our paper!
 
 
 ## Acknowledgements
-Pix2Cap is largely borrowed from [Mask2Former](https://github.com/facebookresearch/Mask2Former), [X-Decoder](https://github.com/microsoft/X-Decoder/tree/v2.0), and [GRiT](https://github.com/JialianW/GRiT). We express our gratitude to the authors for their remarkable work.
+Pix2Cap is largely borrowed from [X-Decoder](https://github.com/microsoft/X-Decoder/tree/v2.0), [GRiT](https://github.com/JialianW/GRiT) and [Mask2Former](https://github.com/facebookresearch/Mask2Former). We express our gratitude to the authors for their remarkable work.

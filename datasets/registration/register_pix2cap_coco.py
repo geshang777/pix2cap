@@ -161,7 +161,6 @@ def register_coco_densecap(root):
         instances_meta = MetadataCatalog.get("coco_2017_train_panoptic" if prefix.split('_')[2] == "train" else "coco_2017_val_panoptic")
         image_root, instances_json = instances_meta.image_root, instances_meta.json_file
         
-        image_root = os.path.join(os.getenv("IMAGEFOLDER", "datasets"),prefix.split('_')[2]+"2017")
         register_coco_panoptic_annos_sem_seg(
             prefix,
             get_metadata(),
