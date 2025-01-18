@@ -1,6 +1,6 @@
 
 
-# Pix2Cap: Advancing Visual Comprehension via Pixel-Level Captioning
+# Pix2Cap-COCO: Advancing Visual Comprehension via Pixel-Level Captioning
 
 ## Overview
 
@@ -46,7 +46,7 @@ bash datasets/evaluation/eval/get_stanford_models.sh
 ### Quick Start
 
 
-We provide an inference demo here if you want to try out the our model. You should download the weights from our Model Zoo (coming soon) first and run the following command:
+We provide an inference demo here if you want to try out the our model. You should download the weights from [here](https://huggingface.co/geshang/Pix2Cap/tree/main) and run the following command:
 
 ```
 python inference/infer_densecaptioning.py evaluate \
@@ -89,7 +89,7 @@ This guide provides step-by-step instructions to prepare the datasets required f
 ---
 After completing the steps, your dataset directory structure should look like this:
 
-```
+```bash
 pix2cap_data/
 ├── coco_caption/
 ├── coco/
@@ -231,7 +231,7 @@ To evaluate on the Visual Genome benchmark:
 
 ---
 
-For further details, refer to the provided setup guides for each part.
+We also open-source the weights fine-tuned using Pix2Cap-COCO, you can download them from [here](https://huggingface.co/geshang/GPT4RoI-P2C-7B/tree/main) and run the [gradio demo](./third_party/gpt4roi/README.md#Gradio) provided by GPT4RoI. For further details, refer to the provided setup guides for each part.
 
 
 ## Citation
