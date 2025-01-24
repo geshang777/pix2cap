@@ -1,7 +1,8 @@
 
 
 # Pix2Cap-COCO: Advancing Visual Comprehension via Pixel-Level Captioning
-
+<a href='https://arxiv.org/abs/2501.13893'><img src='https://img.shields.io/badge/ArXiv-Paper-red' /></a>
+<a href='https://huggingface.co/datasets/geshang/Pix2Cap-COCO'><img src='https://img.shields.io/badge/Hugging Face-Dataset-yellow' /></a>
 ## Overview
 
 <p align="center">
@@ -50,7 +51,7 @@ We provide an inference demo here if you want to try out the our model. You shou
 
 ```
 python inference/infer_densecaptioning.py evaluate \
-    --conf_files configs/focall_unicl_lang_densecap.yaml \
+    --conf_files configs/pix2cap_panoptic_segmentation_captioning.yaml \
     --overrides RESUME_FROM path/to/your/weights
 ```
 ---
@@ -237,6 +238,15 @@ We also open-source the weights fine-tuned using Pix2Cap-COCO, you can download 
 ## Citation
 
 If you think our work is helpful, please star this repo and cite our paper!
+
+```
+@article{you2025pix2cap,
+  title={Pix2Cap-COCO: Advancing Visual Comprehension via Pixel-Level Captioning},
+  author={Zuyao You and Junke Wang and Lingyu Kong and Bo He and Zuxuan Wu},
+  journal={arXiv preprint arXiv:2501.13893},
+  year={2025}
+}
+```
 
 
 ## Acknowledgements
