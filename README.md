@@ -241,7 +241,7 @@ If you think our work is helpful, please star this repo and cite our paper!
 
 ```
 @article{you2025pix2cap},
-  title={Pix2Cap-COCO: Advancing Visual Comprehension via Pixel-Level Captioning},
+  title={{Pix2Cap-COCO}: Advancing Visual Comprehension via Pixel-Level Captioning},
   author={Zuyao You and Junke Wang and Lingyu Kong and Bo He and Zuxuan Wu},
   journal={arXiv preprint arXiv:2501.13893},
   year={2025}
