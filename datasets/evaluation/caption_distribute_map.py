@@ -31,9 +31,13 @@ def nltk_meteor(records, show_subprogressbar=True):
         iters = records
     for r in iters:
         generated_text = r["candidate"].split()
-        reference_texts = [x.split() for x in r["references"]]
         if len(reference_texts)==0:
             reference_texts = [[""]]
+        elif isinstance(r["references"], str):
+            reference_texts = [r["references"].split()]
+        else:
+            assert isinstance(r["references"], list)
+            reference_texts = [x.split() for x in r["references"]]
         score = meteor_score.meteor_score(reference_texts, generated_text)
         scores.append(score)
     out = {}
